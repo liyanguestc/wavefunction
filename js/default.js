@@ -2,7 +2,7 @@
      windowHeight = window.innerHeight;
  var camera, renderer, scene;
 var meshArray = [];
-
+var graph;
  head.ready(function() {
      Init();
      animate();
@@ -50,17 +50,7 @@ var meshArray = [];
      requestAnimationFrame(animate);
      
      //set mesh animation
-     for (var i = 0; i < meshArray.length; i++) {
-         var curMeshGroup = meshArray[i].meshGroup;
-         switch (meshArray[i].name) {
-           case "helloworld":
-              curMeshGroup.rotation.x = 0.8 * Math.sin(5.0 * LEIA.time);
-              curMeshGroup.rotation.z = 0.6 * 0.6 * Math.sin(3.0 * LEIA.time);
-             break;
-              default:
-                 break;
-         }
-     }
+    updateStuff();
    
      renderer.Leia_render({
          scene: scene,
@@ -78,34 +68,39 @@ var meshArray = [];
 
  function addObjectsToScene() {
      //Add your objects here
-      //add STL Object
-     /*addSTLModel({
-         path: 'resource/Cube.stl',
-         meshGroupName: 'Cube',
-         meshSizeX: 30,
-         meshSizeY: 30,
-         meshSizeZ: 30,
-         translateX: 0,
-         translateY: 0,
-         translateZ: 0,
-     });*/
-   
-    //Add Text
-    addTextMenu({
-      text: "Hello",
-      name: "helloworld",
-      size: 15,
-      positionX: -20,
-      positionY: -5,
-      positionZ: 3,
-      rotateX: 0,
-      rotateY: 0,
-      rotateZ: 0
-    });
-   
-   //add background texture
-   LEIA_setBackgroundPlane('resource/brickwall_900x600_small.jpg');
+     createPlane();
  }
+
+function fx(x, y, t){
+	if (t==null) t=0;
+	var r = Math.sqrt(x*x+y*y);	
+	var z = 5*Math.exp(1-r/5)*(Math.cos(1.2*r-t));
+	return z;
+}
+
+function updateStuff(){
+	graph.geometry.verticesNeedUpdate = true;
+	graph.geometry.elementsNeedUpdate = true;
+	graph.geometry.morphTargetsNeedUpdate = true;
+	graph.geometry.uvsNeedUpdate = true;
+	graph.geometry.normalsNeedUpdate = true;
+	graph.geometry.colorsNeedUpdate = true;
+	graph.geometry.tangentsNeedUpdate = true;
+	graph.geometry.computeVertexNormals();
+	graph.geometry.computeFaceNormals();
+}
+
+
+function createPlane(){
+	graph = new THREE.Mesh(new THREE.PlaneGeometry(40, 30, 100, 100), new THREE.MeshLambertMaterial({color:0xffffff}));
+	scene.add(graph);
+	
+	for (var i=0; i<graph.geometry.vertices.length; i++) {
+		graph.geometry.vertices[i].z = fx(graph.geometry.vertices[i].x, graph.geometry.vertices[i].y);
+	}
+	updateStuff();
+	
+}
 
 function addTextMenu(parameters){
     parameters = parameters || {};
@@ -171,16 +166,13 @@ function addTextMenu(parameters){
  function addLights() {
      //Add Lights Here
       var light = new THREE.SpotLight(0xffffff);
-    //light.color.setHSL( Math.random(), 1, 0.5 );
-    light.position.set(0, 60, 60);
-    light.shadowCameraVisible = false;
-    light.castShadow = true;
-    light.shadowMapWidth = light.shadowMapHeight = 256;
-    light.shadowDarkness = 0.7;
-    scene.add(light);
-
-    var ambientLight = new THREE.AmbientLight(0x222222);
-    scene.add(ambientLight);
+      var xl = new THREE.DirectionalLight( 0xffffff );
+			xl.position.set( 1, 0, 2 );
+			scene.add( xl );
+			//var pl = new THREE.PointLight(0x111111);
+			var pl = new THREE.PointLight(0x555555);
+			pl.position.set(-20, 10, 20);
+			scene.add(pl);
  }
 
  function addSTLModel(parameters) { //(filename, meshName, meshSize) {
